@@ -1,30 +1,64 @@
 import Header from '@/components/common/Header';
 import MemoForm from '@/components/MemoForm';
 import MemoItem from '@/components/MemoItem';
-import { memos } from '@/mock';
+import { useMemoContext } from '@/context/MemoContext';
+import { Memo, NewMemo } from '@/types';
 import { Box, Button, Container, List, Typography } from '@mui/material';
 import { useState } from 'react';
 
 function MemoApp() {
+  const { state, addMemo, updateMemo, deleteMemo } = useMemoContext();
   const [isOpenAddModal, setIsOpenAddModal] = useState(false);
+  const [selectedMemo, setSelectedMemo] = useState<Memo | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   function handleToggleAddModal() {
     setIsOpenAddModal(!isOpenAddModal);
+
+    setIsEditMode(false);
+    setSelectedMemo(null);
   }
-  function handleCloseAddModal() {
+
+  function handleCloseModal() {
     setIsOpenAddModal(false);
+    setIsEditMode(false);
+    setSelectedMemo(null);
   }
 
-  function handleSubmit(e) {
-    e.preventDefault();
+  function handleSubmitAdd(data: { title: string; content: string }) {
+    const newMemo: NewMemo = {
+      title: data.title,
+      content: data.content,
+    };
+
+    addMemo(newMemo);
+    handleCloseModal();
   }
 
-  function handleEdit(id: number) {
-    console.log(id, 'edit');
+  function handleSubmitEdit(data: { title: string; content: string }) {
+    if (selectedMemo) {
+      const updatedMemo: Memo = {
+        ...selectedMemo,
+        title: data.title,
+        content: data.content,
+      };
+
+      updateMemo(updatedMemo);
+      handleCloseModal();
+    }
   }
 
-  function handleDelete(id: number) {
-    console.log(id, 'delete');
+  function handleEdit(id: string) {
+    const memoToEdit = state.memos.find((memo) => memo.id === id);
+    if (memoToEdit) {
+      setSelectedMemo(memoToEdit);
+      setIsEditMode(true);
+      setIsOpenAddModal(true);
+    }
+  }
+
+  function handleDelete(id: string) {
+    deleteMemo(id);
   }
 
   return (
@@ -42,21 +76,38 @@ function MemoApp() {
 
             {isOpenAddModal && (
               <MemoForm
+                title={isEditMode ? '메모 수정' : '메모 추가'}
                 isOpenAddModal={isOpenAddModal}
-                onClose={handleCloseAddModal}
-                onSubmit={handleSubmit}
+                onClose={handleCloseModal}
+                onSubmit={isEditMode ? handleSubmitEdit : handleSubmitAdd}
+                initialData={
+                  isEditMode && selectedMemo
+                    ? {
+                        title: selectedMemo.title,
+                        content: selectedMemo.content,
+                      }
+                    : undefined
+                }
               />
             )}
 
-            <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-              {memos.map((memo) => (
-                <MemoItem
-                  key={memo.id}
-                  memo={memo}
-                  onEdit={() => handleEdit(memo.id)}
-                  onDelete={() => handleDelete(memo.id)}
-                />
-              ))}
+            <List sx={{ width: '100%', bgcolor: 'background.paper', mt: 2 }}>
+              {state.memos.length > 0 ? (
+                state.memos.map((memo) => (
+                  <MemoItem
+                    key={memo.id}
+                    memo={memo}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
+                ))
+              ) : (
+                <Typography
+                  variant='body1'
+                  sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+                  메모가 없습니다. 새 메모를 추가해보세요.
+                </Typography>
+              )}
             </List>
           </Box>
         </Container>

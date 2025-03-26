@@ -1,63 +1,58 @@
+import { Memo } from '@/types';
 import { formatDate } from '@/utils/formatter';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import { Box, Card, CardContent, IconButton, Typography } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import {
+  Box,
+  Card,
+  CardContent,
+  Collapse,
+  Divider,
+  IconButton,
+  Typography,
+} from '@mui/material';
+import { useState } from 'react';
 
 interface MemoItemProps {
-  memo: {
-    id: number;
-    title: string;
-    content: string;
-    createdAt: string;
-  };
-  onEdit?: (id: number) => void;
-  onDelete?: (id: number) => void;
-  onClick?: (id: number) => void;
+  memo: Memo;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
-function MemoItem({ memo, onEdit, onDelete, onClick }: MemoItemProps) {
+function MemoItem({ memo, onEdit, onDelete }: MemoItemProps) {
+  const [expanded, setExpanded] = useState(false);
+
+  const handleExpandClick = () => {
+    setExpanded(!expanded);
+  };
+
   return (
-    <Card
-      key={memo.id}
-      sx={{
-        mb: 2,
-        '&:hover': { boxShadow: 3 },
-        cursor: 'pointer',
-      }}
-      onClick={() => onClick?.(memo.id)}>
-      <CardContent>
+    <Card key={memo.id} sx={{ mb: 2, '&:hover': { boxShadow: 3 } }}>
+      <CardContent sx={{ pb: 1 }}>
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
           }}>
-          <Box sx={{ flex: 1 }}>
+          <Box
+            sx={{
+              flex: 1,
+              cursor: 'pointer',
+            }}
+            onClick={handleExpandClick}>
             <Typography variant='h6' component='h3' noWrap>
               {memo.title}
             </Typography>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{
-                mt: 1,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-              }}>
-              {memo.content}
-            </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', ml: 2 }}>
+          <Box sx={{ display: 'flex', ml: 2, alignItems: 'center' }}>
             <IconButton
               size='small'
               color='primary'
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit?.(memo.id);
+              onClick={() => {
+                onEdit(memo.id);
               }}>
               <EditIcon />
             </IconButton>
@@ -65,11 +60,20 @@ function MemoItem({ memo, onEdit, onDelete, onClick }: MemoItemProps) {
             <IconButton
               size='small'
               color='error'
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete?.(memo.id);
+              onClick={() => {
+                onDelete(memo.id);
               }}>
               <DeleteIcon />
+            </IconButton>
+
+            <IconButton
+              size='small'
+              onClick={handleExpandClick}
+              sx={{
+                transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.3s',
+              }}>
+              <ExpandMoreIcon />
             </IconButton>
           </Box>
         </Box>
@@ -78,12 +82,24 @@ function MemoItem({ memo, onEdit, onDelete, onClick }: MemoItemProps) {
           sx={{
             display: 'flex',
             justifyContent: 'flex-end',
-            mt: 2,
+            mt: 1,
           }}>
           <Typography variant='caption' color='text.secondary'>
             생성: {formatDate(memo.createdAt)}
+            {memo.updatedAt && ` / 수정: ${formatDate(memo.updatedAt)}`}
           </Typography>
         </Box>
+
+        <Collapse in={expanded} timeout='auto' unmountOnExit>
+          <Box sx={{ mt: 2 }}>
+            <Divider sx={{ my: 1 }} />
+            <Typography
+              variant='body1'
+              sx={{ mt: 2, mb: 2, whiteSpace: 'pre-wrap' }}>
+              {memo.content}
+            </Typography>
+          </Box>
+        </Collapse>
       </CardContent>
     </Card>
   );
