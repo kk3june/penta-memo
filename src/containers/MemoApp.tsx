@@ -1,10 +1,18 @@
 import Header from '@/components/common/Header';
-import DeleteConfirmDialog from '@/components/DeleteConfirmDialog';
+import Notification from '@/components/common/Notification';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import MemoForm from '@/components/MemoForm';
 import MemoItem from '@/components/MemoItem';
 import { useMemoContext } from '@/context/MemoContext';
 import { Memo, NewMemo } from '@/types';
-import { Box, Button, Container, List, Typography } from '@mui/material';
+import {
+  AlertColor,
+  Box,
+  Button,
+  Container,
+  List,
+  Typography,
+} from '@mui/material';
 import { useState } from 'react';
 
 function MemoApp() {
@@ -12,14 +20,40 @@ function MemoApp() {
   const [isOpenAddModal, setIsOpenAddModal] = useState(false);
   const [selectedMemo, setSelectedMemo] = useState<Memo | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [memoToDelete, setMemoToDelete] = useState<{
     id: string;
     title: string;
   } | null>(null);
 
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'success' as AlertColor,
+  });
+
+  const showNotification = (
+    message: string,
+    severity: AlertColor = 'success',
+  ) => {
+    setNotification({
+      open: true,
+      message,
+      severity,
+    });
+  };
+
+  const handleCloseNotification = () => {
+    setNotification((prev) => ({
+      ...prev,
+      open: false,
+    }));
+  };
+
   function handleToggleAddModal() {
     setIsOpenAddModal(!isOpenAddModal);
+
     setIsEditMode(false);
     setSelectedMemo(null);
   }
@@ -38,6 +72,7 @@ function MemoApp() {
 
     addMemo(newMemo);
     handleCloseModal();
+    showNotification('메모가 추가되었습니다.');
   }
 
   function handleSubmitEdit(data: { title: string; content: string }) {
@@ -50,6 +85,7 @@ function MemoApp() {
 
       updateMemo(updatedMemo);
       handleCloseModal();
+      showNotification('메모가 수정되었습니다.');
     }
   }
 
@@ -62,7 +98,7 @@ function MemoApp() {
     }
   }
 
-  function handleDelete(id: string) {
+  function handleDeleteClick(id: string) {
     const memoToDelete = state.memos.find((memo) => memo.id === id);
     if (memoToDelete) {
       setMemoToDelete({
@@ -73,16 +109,15 @@ function MemoApp() {
     }
   }
 
-  // 삭제 확인
   function handleConfirmDelete() {
     if (memoToDelete) {
       deleteMemo(memoToDelete.id);
       setDeleteConfirmOpen(false);
       setMemoToDelete(null);
+      showNotification('메모가 삭제되었습니다.');
     }
   }
 
-  // 삭제 취소
   function handleCancelDelete() {
     setDeleteConfirmOpen(false);
     setMemoToDelete(null);
@@ -103,7 +138,7 @@ function MemoApp() {
 
             {isOpenAddModal && (
               <MemoForm
-                title={isEditMode ? '메모 수정' : '메모 추가'}
+                title={isEditMode ? '메모 수정' : '메모 삭제'}
                 isOpenAddModal={isOpenAddModal}
                 onClose={handleCloseModal}
                 onSubmit={isEditMode ? handleSubmitEdit : handleSubmitAdd}
@@ -125,7 +160,7 @@ function MemoApp() {
                     key={memo.id}
                     memo={memo}
                     onEdit={handleEdit}
-                    onDelete={handleDelete}
+                    onDelete={handleDeleteClick}
                   />
                 ))
               ) : (
@@ -140,14 +175,23 @@ function MemoApp() {
         </Container>
       </Box>
 
+      {/* 삭제 확인 모달 */}
       {memoToDelete && (
-        <DeleteConfirmDialog
+        <DeleteConfirmModal
           open={deleteConfirmOpen}
           memoTitle={memoToDelete.title}
           onClose={handleCancelDelete}
           onConfirm={handleConfirmDelete}
         />
       )}
+
+      {/* 알림 컴포넌트 */}
+      <Notification
+        open={notification.open}
+        message={notification.message}
+        severity={notification.severity}
+        onClose={handleCloseNotification}
+      />
 
       <Box
         component='footer'
