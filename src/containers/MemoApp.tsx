@@ -1,4 +1,5 @@
 import Header from '@/components/common/Header';
+import DeleteConfirmDialog from '@/components/DeleteConfirmDialog';
 import MemoForm from '@/components/MemoForm';
 import MemoItem from '@/components/MemoItem';
 import { useMemoContext } from '@/context/MemoContext';
@@ -11,10 +12,14 @@ function MemoApp() {
   const [isOpenAddModal, setIsOpenAddModal] = useState(false);
   const [selectedMemo, setSelectedMemo] = useState<Memo | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [memoToDelete, setMemoToDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   function handleToggleAddModal() {
     setIsOpenAddModal(!isOpenAddModal);
-
     setIsEditMode(false);
     setSelectedMemo(null);
   }
@@ -58,7 +63,29 @@ function MemoApp() {
   }
 
   function handleDelete(id: string) {
-    deleteMemo(id);
+    const memoToDelete = state.memos.find((memo) => memo.id === id);
+    if (memoToDelete) {
+      setMemoToDelete({
+        id: memoToDelete.id,
+        title: memoToDelete.title,
+      });
+      setDeleteConfirmOpen(true);
+    }
+  }
+
+  // 삭제 확인
+  function handleConfirmDelete() {
+    if (memoToDelete) {
+      deleteMemo(memoToDelete.id);
+      setDeleteConfirmOpen(false);
+      setMemoToDelete(null);
+    }
+  }
+
+  // 삭제 취소
+  function handleCancelDelete() {
+    setDeleteConfirmOpen(false);
+    setMemoToDelete(null);
   }
 
   return (
@@ -112,6 +139,15 @@ function MemoApp() {
           </Box>
         </Container>
       </Box>
+
+      {memoToDelete && (
+        <DeleteConfirmDialog
+          open={deleteConfirmOpen}
+          memoTitle={memoToDelete.title}
+          onClose={handleCancelDelete}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
 
       <Box
         component='footer'
