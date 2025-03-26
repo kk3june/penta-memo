@@ -9,45 +9,39 @@ import {
 import { useEffect, useState } from 'react';
 
 interface Props {
-  title: string;
   isOpenAddModal: boolean;
   onClose: () => void;
   onSubmit: (data: { title: string; content: string }) => void;
   initialData?: { title: string; content: string };
 }
 
-function MemoForm({
-  title,
-  isOpenAddModal,
-  onClose,
-  onSubmit,
-  initialData,
-}: Props) {
-  const [memo, setMemo] = useState<Record<string, string>>({
+function MemoForm({ isOpenAddModal, onClose, onSubmit, initialData }: Props) {
+  const [memo, setMemo] = useState({
     title: initialData?.title || '',
     content: initialData?.content || '',
   });
+  const [isTouched, setIsTouched] = useState(false);
 
   useEffect(() => {
     if (initialData) {
-      setMemo({
-        title: initialData.title,
-        content: initialData.content,
-      });
+      setMemo({ title: initialData.title, content: initialData.content });
     }
   }, [initialData]);
 
   useEffect(() => {
     if (!isOpenAddModal) {
       setMemo({ title: '', content: '' });
+      setIsTouched(false);
     }
   }, [isOpenAddModal]);
 
   const handleSave = () => {
+    setIsTouched(true);
     if (!memo.title.trim()) return;
 
     onSubmit({ title: memo.title.trim(), content: memo.content.trim() });
     setMemo({ title: '', content: '' });
+    setIsTouched(false);
     onClose();
   };
 
@@ -59,7 +53,7 @@ function MemoForm({
   return (
     <Dialog open={isOpenAddModal} onClose={onClose} fullWidth>
       <form onSubmit={handleSubmit}>
-        <DialogTitle>{title}</DialogTitle>
+        <DialogTitle>{initialData ? '메모 수정' : '메모 추가'}</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
@@ -70,6 +64,10 @@ function MemoForm({
             autoFocus
             value={memo.title}
             onChange={(e) => setMemo({ ...memo, title: e.target.value })}
+            error={isTouched && !memo.title.trim()}
+            helperText={
+              isTouched && !memo.title.trim() ? '제목을 입력해주세요.' : ''
+            }
           />
           <TextField
             fullWidth
@@ -94,7 +92,6 @@ function MemoForm({
             variant='contained'
             sx={{ px: 4 }}
             onClick={handleSave}
-            disabled={!memo.title.trim()}
             type='submit'>
             {initialData ? '수정' : '저장'}
           </Button>

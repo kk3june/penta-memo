@@ -138,7 +138,6 @@ function MemoApp() {
 
             {isOpenAddModal && (
               <MemoForm
-                title={isEditMode ? '메모 수정' : '메모 삭제'}
                 isOpenAddModal={isOpenAddModal}
                 onClose={handleCloseModal}
                 onSubmit={isEditMode ? handleSubmitEdit : handleSubmitAdd}
